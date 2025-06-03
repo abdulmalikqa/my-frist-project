@@ -9,7 +9,7 @@ exports.createUserValidetor = [
     .notEmpty() 
     .withMessage("Name is required")
     .isLength({ min: 5 })
-    .withMessage("Name is too short")
+    .withMessage("Name is too short") 
     .custom((val, { req }) => {
       req.body.slug = slugify(val);
       return true;
@@ -90,3 +90,63 @@ exports.updateUserValidator = [
 
   validetorMiddleware,
 ];
+
+  exports.changePassworValidator=[
+    check('id').isMongoId().withMessage('Invalid user ID format'),
+    check('currentPassword').notEmpty().withMessage('You must enter your current password'),
+    check('passwordConfirm')
+    .notEmpty()
+    .withMessage('You must enter the password confirm'),
+    check('password')
+    .notEmpty()
+    .withMessage('You must enter new password')
+    .custom( async(val ,{req})=>{
+
+        const user = await userSchema.findById(req.params.id);
+
+        // التحقق من اليوزر
+        if(!user)
+        {
+            throw new Error('There is no user for id ');
+        }
+        //مقارنة كلمة المرور المرسلة مع الموجود بقاعدة البيانات بعد تحويلها 
+     const isCurrect= await   bcrypt.compare(req.body.currentPassword , user.password);
+     if(!isCurrect){        throw new Error('Incorrect current password');     }
+
+     // التحقق من الكلمة السر المدخلة الجديدة 
+     if(val !== req.body.passwordConfirm)
+        {
+            throw new Error('Password Confirmation incorrect');
+        }
+        return true;
+
+    })
+    , validetorMiddleware
+  ];
+  //updateLoggedUserValidator
+  exports.updateLoggedUserValidator = [
+    body('name')
+      .optional()
+      .custom((val, { req }) => {
+        req.body.slug = slugify(val);
+        return true;
+      }),
+    check('email')
+      .notEmpty()
+      .withMessage('Email required')
+      .isEmail()
+      .withMessage('Invalid email address')
+      .custom((val) =>
+        userSchema.findOne({ email: val }).then((user) => {
+          if (user) {
+            return Promise.reject(new Error('E-mail already in user'));
+          }
+        })
+      ),
+    check('phone')
+      .optional()
+      .isMobilePhone(['ar-YE', 'ar-SA'])
+      .withMessage('Invalid phone number only accepted Ye and SA Phone numbers'),
+  
+    validetorMiddleware,
+  ];

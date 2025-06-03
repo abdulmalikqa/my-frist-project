@@ -4,7 +4,8 @@ const dotenv = require('dotenv')
 require('dotenv').config({path:'Config.env'})
 const dbConnection = require('./config/database');
 const mountRoutes = require('./Routes/index');
- 
+const globalError = require('./middlewares/errorMiddlware')
+
 
 const app = express();
 
@@ -22,7 +23,7 @@ if(process.env.NODE_ENV ==='development')
 
   mountRoutes(app);
 //   mountRoutes(app);
-
+ app.use(globalError );
  
 // app.post('/api/user',async(req,res)=>{
     

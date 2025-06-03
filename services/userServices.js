@@ -4,11 +4,23 @@ const ApiError = require('../utils/apiError')
 const handlerFactory = require('../services/handlerFactory');
 const fs = require('fs');
 const path = require('path'); 
+const bcrypt = require('bcrypt');
+const createToken = require('../utils/createToken');
 
 // @desc    Create User
 // @route   POST  /api/v1/user
 // @access  Private
 exports.createUser= handlerFactory.CreateOne(userSchema);
+
+// @desc    Get specific User by id
+// @route   GET /api/v1/users/:id
+// @access  Public
+exports.getUserById = handlerFactory.getDataById(userSchema ,'user');
+
+// @desc    Get list of user
+// @route   GET /api/v1/users
+// @access  private
+exports.getUsers = handlerFactory.getAll(userSchema);
 // @desc    Update specific User
 // @route   PUT /api/v1/user/:id
 // @access  Private
@@ -47,7 +59,7 @@ exports.updateUser = asyncHandler(async(req,res , next)=>{
 });
 
 // @desc    deactivateUser specific User
-// @route   PUT /api/v1/Users/deactivateUser/:id
+// @route   PUT /api/v1/users/deactivateUser/:id
 // @access  Private
 exports.deactivateUser = asyncHandler(async(req,res,next)=>{
     const user = await userSchema.findByIdAndUpdate(req.params.id,{active:false},{new:true});
@@ -59,7 +71,7 @@ exports.deactivateUser = asyncHandler(async(req,res,next)=>{
 });
 
 // @desc    deactivateUser specific User
-// @route   PUT /api/v1/Users/activateUser/:id
+// @route   PUT /api/v1/users/activateUser/:id
 // @access  Private
 exports.activateUser= asyncHandler(async(req,res,next)=>{
     const user = await userSchema.findByIdAndUpdate(req.params.id ,{active:true},{new:true});
@@ -68,6 +80,9 @@ exports.activateUser= asyncHandler(async(req,res,next)=>{
     res.status(200).json({Masseg :'User activated..' , Data:user} )
 })
 
+// @desc    delete specific User
+// @route   PUT /api/v1/users/deleteUser/:id
+// @access  Private
 exports.deleteUser = asyncHandler(async(req,res,next)=>{
 
     const user = await userSchema.findById(req.params.id);
@@ -90,29 +105,54 @@ exports.deleteUser = asyncHandler(async(req,res,next)=>{
     res.status(200).json({ message: 'User and image deleted successfully' });
 
 });
-// exports.createData= asyncHandler( async(req,res,next)=>{
-
+// @desc    Get Logged user data
+// @route   GET /api/v1/users/getMe
+// @access  Private/Protect
+ exports.getLoggedUserData = asyncHandler(async(req,res,next)=>{
   
-//     const Data= await userSchema.create(req.body);
-//     res.status(201).json({data:Data});
+  req.params.id = req.user._id;
+  next();
 
-// });
+ })
 
-// exports.updaetData= asyncHandler( async(req,res,next)=>{
-//      // جلب المستخدم أولاً للحصول على الصورة القديمة
-//   const oldUser = await userSchema.findById(req.params.id);
-//   if (!oldUser) {
-//     return next(new ApiError(`No user found with ID: ${req.params.id}`, 404));
-//   }
+ // @desc    Update logged user password
+// @route   PUT /api/v1/users/updateMyPassword
+// @access  Private/Protect
+exports.updateLoggedUserPassword = asyncHandler(async(req,res,next)=>{
+     // 1) Update user password based user payload (req.user._id)
+     const  user = await userSchema.findByIdAndUpdate( req.user._id,
+      {
+        password : await bcrypt.hash(req.body.password ,12),
+        passwordChangedAt : Date.now(),
+      },
+      {
+        new : true
 
-//   // تمرير اسم الصورة القديمة للميدل وير الخاص بالحذف
-//   if (oldUser.profileImg) {
-//     req.oldImage = oldUser.profileImg;
-//   }
+      }
 
-//   // الآن يتم التحديث بعد ما عرفنا الصورة القديمة
-//   const updatedUser = await userSchema.findByIdAndUpdate(req.params.id, req.body, { new: true, });
+     );
 
-//   res.status(200).json({ data: updatedUser });
+      // 2) Generate token
+    const token = createToken(user._id);
 
-// });
+    res.status(200).json({ data: user, token });
+
+
+ }) ;
+
+// @desc    Update logged user data (without password, role)
+// @route   PUT /api/v1/users/updateMe
+// @access  Private/Protect
+exports.updateLoggedUserData = asyncHandler(async (req, res, next) => {
+  const updatedUser = await userSchema.findByIdAndUpdate(
+    req.user._id,
+    {
+      name: req.body.name,
+      email: req.body.email,
+      phone: req.body.phone,
+    },
+    { new: true }
+  );
+
+  res.status(200).json({ data: updatedUser });
+});
