@@ -31,7 +31,7 @@ exports.DeletedOn=(modelName , nameMass)=>asyncHandler(async(req,res,next)=>{
     {
         return next(new ApiError(`No ${nameMass} found id : ${id}` ,404))
     }
-    res.status(200).json({Data:doucm});
+    res.status(200).json({'Status':'The deletion process was completed successfully.'});
 });
 
 exports.getDataById = (modelName , nameMass) => asyncHandler(async(req,res,next)=>{

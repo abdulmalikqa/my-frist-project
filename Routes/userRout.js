@@ -1,11 +1,11 @@
 const express = require("express");
 
 const {
-  createUserValidetor,
-  checkformatId,
+    createUserValidetor, 
   updateUserValidator,
   updateLoggedUserValidator,
 } = require("../utils/validetors/userValidetor");
+
 const { uploadSingleImage } = require("../middlewares/uploadImageMiddleware");
 const resizeImage = require("../middlewares/resizeImageMiddleware");
 const {

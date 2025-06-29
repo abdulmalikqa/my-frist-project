@@ -49,9 +49,9 @@ class ApiFeatures{
      */
     sorting()
     {
-         // 3) sorting
- ////let sortBy = req.query.sort ? req.query.sort.split(',').join(' ') : '-createdAt';
- //Or
+        // 3) sorting
+        //let sortBy = req.query.sort ? req.query.sort.split(',').join(' ') : '-createdAt';
+        //Or
 
  if(this.queryString.sort){ 
     const mysort = this.queryString.sort.split(',').join(' ');
